@@ -1,4 +1,4 @@
-package com.example.beta_app1
+package com.nutrify.app
 
 import io.flutter.embedding.android.FlutterActivity
 

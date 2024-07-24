@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor:
           Colors.white, // Ubah sesuai warna latar belakang yang diinginkan
       body: Center(
-        child: Image.asset('images/nature.gif',
+        child: Image.asset('images/nutrify.png',
             width: 200,
             height:
                 200), // Pastikan untuk menambahkan logo Anda di folder assets

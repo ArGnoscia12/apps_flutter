@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:http/http.dart' as http;
@@ -28,13 +30,29 @@ class _HomePageState extends State<HomePage> {
   late StreamSubscription<List<MqttReceivedMessage<MqttMessage?>>>?
       subscription;
   final ApiService apiService = ApiService();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   List<Widget> _children = [];
+
+  double? tdsmin;
+  double? tdsmax;
+  double? tdsnow;
 
   @override
   void initState() {
     super.initState();
     _initializeClient();
+
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    flutterLocalNotificationsPlugin
+        .initialize(initializationSettings)
+        .then((_) {
+      print('Notification plugin initialized');
+    });
   }
 
   void _initializeClient() async {
@@ -114,6 +132,8 @@ class _HomePageState extends State<HomePage> {
     _client.subscribe('sensor/waterflow1', MqttQos.atLeastOnce);
     _client.subscribe('sensor/waterflow2', MqttQos.atLeastOnce);
     _client.subscribe('sensor/ultrasonic', MqttQos.atLeastOnce);
+    _client.subscribe(
+        'parameter', MqttQos.atLeastOnce); // Subscribe to parameter topic
 
     subscription = _client.updates!.listen(
       (List<MqttReceivedMessage<MqttMessage?>> messages) async {
@@ -153,13 +173,29 @@ class _HomePageState extends State<HomePage> {
             } else {
               print('Invalid data format in ${messages[0].topic}: $data');
             }
+          } else if (messages[0].topic == 'parameter') {
+            Map<String, dynamic> data = jsonDecode(payload);
+
+            if (data.containsKey('tdsmin') && data['tdsmin'] != null) {
+              setState(() {
+                tdsmin = (data['tdsmin'] as num).toDouble();
+              });
+              print('Updated tdsmin: $tdsmin');
+            }
+
+            if (data.containsKey('tdsmax') && data['tdsmax'] != null) {
+              setState(() {
+                tdsmax = (data['tdsmax'] as num).toDouble();
+              });
+              print('Updated tdsmax: $tdsmax');
+            }
           } else {
             double? value;
             try {
               value = double.parse(payload);
             } catch (e) {
               print('Error parsing payload: $e');
-              return; // Jika parsing gagal, keluar dari fungsi
+              return;
             }
 
             if (mounted) {
@@ -167,6 +203,13 @@ class _HomePageState extends State<HomePage> {
                 switch (messages[0].topic) {
                   case 'sensor/tds':
                     sensorData.tdsValue = value;
+                    tdsnow = value;
+                    if (tdsnow != null && tdsmax != null && tdsnow! > tdsmax!) {
+                      _showNotification(
+                        'TDS Alert',
+                        'Nilai TDS ($tdsnow) melebihi batas maksimum ($tdsmax). Mohon segera tambahkan air',
+                      );
+                    }
                     break;
                   case 'sensor/ultrasonic':
                     sensorData.ultrasonicValue = value;
@@ -185,6 +228,61 @@ class _HomePageState extends State<HomePage> {
         }
       },
     );
+  }
+
+  Future<void> _showNotification(String title, String body) async {
+    print('Attempting to show notification');
+
+    final Int64List vibrationPattern = Int64List(4);
+    vibrationPattern[0] = 0;
+    vibrationPattern[1] = 1000;
+    vibrationPattern[2] = 5000;
+    vibrationPattern[3] = 2000;
+
+    final AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'alerts_channel',
+      'Alerts',
+      channelDescription: 'Channel for important alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+      vibrationPattern: vibrationPattern,
+      enableVibration: true,
+      enableLights: true,
+      color: const Color.fromARGB(255, 255, 0, 0),
+      ledColor: const Color.fromARGB(255, 255, 0, 0),
+      ledOnMs: 1000,
+      ledOffMs: 500,
+    );
+
+    final NotificationDetails notificationDetails =
+        NotificationDetails(android: androidNotificationDetails);
+
+    try {
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        title,
+        body,
+        notificationDetails,
+      );
+      print('Notification shown successfully');
+    } catch (e) {
+      print('Error showing notification: $e');
+    }
+  }
+
+  Future<void> saveTdsValues(double tdsmin, double tdsmax) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('tdsmin', tdsmin);
+    await prefs.setDouble('tdsmax', tdsmax);
+  }
+
+  Future<Map<String, double?>> loadTdsValues() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    double? tdsmin = prefs.getDouble('tdsmin');
+    double? tdsmax = prefs.getDouble('tdsmax');
+    return {'tdsmin': tdsmin, 'tdsmax': tdsmax};
   }
 
 // Fungsi untuk menyimpan data ke database

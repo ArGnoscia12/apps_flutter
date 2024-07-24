@@ -33,7 +33,8 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    String mqttServerIp = prefs.getString('mqtt_server_ip') ?? '192.168.87.153';
+    String mqttServerIp =
+        prefs.getString('mqtt_server_ip') ?? '192.168.182.153';
     String url = 'http://$mqttServerIp/test_api/login.php';
 
     final response = await http.post(
@@ -127,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Image.asset(
-                  "images/nature.gif",
+                  "images/nutrify.png",
                   height: 200,
                   width: 200,
                 ),
@@ -215,31 +216,41 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           child: const Text(
                             'Login',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => RegisterPage()),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromARGB(255, 255, 255, 255),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: const Text(
-                            'Register',
-                            style: TextStyle(
-                                color: Color.fromARGB(166, 26, 21, 21)),
+                        const SizedBox(height: 25),
+                        Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                'Belum memiliki akun?',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14.0,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => RegisterPage(),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  ' Register',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -258,7 +269,7 @@ class _LoginPageState extends State<LoginPage> {
                 const Text(
                   "@2024",
                   style: TextStyle(color: Colors.black, fontSize: 10.0),
-                )
+                ),
               ],
             ),
           ),

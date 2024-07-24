@@ -258,8 +258,8 @@ class _ChartsSectionState extends State<ChartsSection> {
       ),
       primaryYAxis: NumericAxis(
         minimum: 0,
-        maximum: 20,
-        interval: 5,
+        maximum: 1000,
+        interval: 200,
         majorGridLines: MajorGridLines(width: 0.5, color: Colors.grey[300]),
         axisLine: AxisLine(width: 0),
         labelStyle: TextStyle(color: Colors.grey[700], fontSize: 12),
