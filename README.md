@@ -1,6 +1,7 @@
 # Flutter Nutrify App
 
-![Nutrify](https://github.com/ArGnoscia12/apps_flutter/blob/main/images/nutrify.png)
+<img src="https://github.com/user-attachments/assets/4947b2f1-e801-4421-81df-9947b12d2eba" width="500">
+
 App for Control dan Monitoring Nutrient Hydoponics machine
 
 ## Getting Started
